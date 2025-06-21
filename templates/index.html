@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        .task-list { list-style: none; padding: 0; }
+        .task-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .task-item.done .task-content { text-decoration: line-through; color: #aaa; }
+        .task-content { flex-grow: 1; }
+        .actions a { text-decoration: none; color: #fff; padding: 5px 10px; border-radius: 4px; margin-left: 5px; }
+        .toggle-btn { background-color: #4CAF50; } /* Green */
+        .delete-btn { background-color: #f44336; } /* Red */
+        form { display: flex; margin-bottom: 20px; }
+        input[type="text"] { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="submit"] { padding: 10px; border: none; background-color: #007BFF; color: white; border-radius: 4px; margin-left: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>To-Doリスト</h1>
+
+    <form action="{{ url_for('add') }}" method="POST">
+        <input type="text" name="task_content" placeholder="新しいタスクを入力" required>
+        <input type="submit" value="追加">
+    </form>
+
+    <ul class="task-list">
+        {% for index, task in tasks %}
+            <li class="task-item {% if task.done %}done{% endif %}">
+                <span class="task-content">{{ task.content }}</span>
+                <div class="actions">
+                    <a href="{{ url_for('toggle', task_id=index) }}" class="toggle-btn">完了</a>
+                    <a href="{{ url_for('delete', task_id=index) }}" class="delete-btn">削除</a>
+                </div>
+            </li>
+        {% else %}
+            <li>タスクはありません。</li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
