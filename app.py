@@ -23,6 +23,7 @@ def add():
     task_content = request.form['task_content']
     if task_content: # 空のタスクは追加しない
         tasks.append({'content': task_content, 'done': False})
+    # index() 関数にリダイレクト
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:task_id>')
@@ -32,6 +33,7 @@ def delete(task_id):
     """
     if 0 <= task_id < len(tasks):
         tasks.pop(task_id)
+    # index() 関数にリダイレクト
     return redirect(url_for('index'))
 
 @app.route('/toggle/<int:task_id>')
@@ -41,6 +43,7 @@ def toggle(task_id):
     """
     if 0 <= task_id < len(tasks):
         tasks[task_id]['done'] = not tasks[task_id]['done']
+    # index() 関数にリダイレクト
     return redirect(url_for('index'))
 
 
