@@ -27,12 +27,12 @@
     </form>
 
     <ul class="task-list">
-        {% for index, task in tasks %}
+        {% for task in tasks %}
             <li class="task-item {% if task.done %}done{% endif %}">
                 <span class="task-content">{{ task.content }}</span>
                 <div class="actions">
-                    <a href="{{ url_for('toggle', task_id=index) }}" class="toggle-btn">完了</a>
-                    <a href="{{ url_for('delete', task_id=index) }}" class="delete-btn">削除</a>
+                    <a href="{{ url_for('toggle', task_id=task.id) }}" class="toggle-btn">完了</a>
+                    <a href="{{ url_for('delete', task_id=task.id) }}" class="delete-btn">削除</a>
                 </div>
             </li>
         {% else %}
