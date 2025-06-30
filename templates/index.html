@@ -6,6 +6,30 @@
     <title>To-Do App</title>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
         .task-list { list-style: none; padding: 0; }
         .task-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
         .task-item.done .task-content { text-decoration: line-through; color: #aaa; }
@@ -19,7 +43,13 @@
     </style>
 </head>
 <body>
-    <h1>To-Doリスト</h1>
+    <div class="header">
+        <h1>To-Doリスト</h1>
+        <div class="user-info">
+            <span>ようこそ、{{ current_user.username }}さん</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">ログアウト</a>
+        </div>
+    </div>
 
     <form action="{{ url_for('add') }}" method="POST">
         <input type="text" name="task_content" placeholder="新しいタスクを入力" required>
@@ -31,12 +61,14 @@
             <li class="task-item {% if task.done %}done{% endif %}">
                 <span class="task-content">{{ task.content }}</span>
                 <div class="actions">
-                    <a href="{{ url_for('toggle', task_id=task.id) }}" class="toggle-btn">完了</a>
+                    <a href="{{ url_for('toggle', task_id=task.id) }}" class="toggle-btn">
+                        {% if task.done %}未完了{% else %}完了{% endif %}
+                    </a>
                     <a href="{{ url_for('delete', task_id=task.id) }}" class="delete-btn">削除</a>
                 </div>
             </li>
         {% else %}
-            <li>タスクはありません。</li>
+            <li>タスクはありません。新しいタスクを追加してください。</li>
         {% endfor %}
     </ul>
 
