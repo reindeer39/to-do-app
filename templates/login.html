@@ -79,7 +79,7 @@
     <div class="login-container">
         <h1>ログイン</h1>
         
-        {% with messages = get_flashed_messages() %}
+        <!-- {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="flash-messages">
                     {% for message in messages %}
@@ -87,7 +87,12 @@
                     {% endfor %}
                 </div>
             {% endif %}
-        {% endwith %}
+        {% endwith %} -->
+
+        <!-- エラーメッセージ表示用のdiv -->
+        <div id="flash-messages" class="flash-messages" style="display: none;">
+            <div class="flash-message" id="error-message"></div>
+        </div>
 
         <form method="POST">
             <label for="username">ユーザー名</label>
@@ -100,8 +105,52 @@
         </form>
         
         <div class="link">
-            <p>アカウントをお持ちでない方は<a href="{{ url_for('register') }}">こちらから登録</a></p>
+            <!-- <p>アカウントをお持ちでない方は<a href="{{ url_for('register') }}">こちらから登録</a></p> -->
+            <p>アカウントをお持ちでない方は<a href="register.html">こちらから登録</a></p>
         </div>
     </div>
+    <script>
+        // DOM読み込み完了後にイベントリスナーを追加
+        document.addEventListener('DOMContentLoaded', function() {
+            // フォームのsubmitイベントを乗っ取る
+            document.querySelector('form').addEventListener('submit', async (e) => {
+                e.preventDefault(); // デフォルトのフォーム送信をキャンセル
+
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5001/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username, password }),
+                    });
+
+                    if (!response.ok) {
+                        // ログイン失敗時の処理
+                        const errorData = await response.json();
+                        alert('ログイン失敗: ' + errorData.msg);
+                        return;
+                    }
+                    
+                    // ログイン成功
+                    const data = await response.json();
+                    
+                    // ★重要：取得したトークンをブラウザに保存する
+                    localStorage.setItem('accessToken', data.access_token);
+                    
+                    alert('ログインに成功しました！');
+                    // ToDoリストページに遷移
+                    window.location.href = 'index.html';
+
+                } catch (error) {
+                    console.error('ログイン処理中にエラーが発生しました:', error);
+                    alert('エラーが発生しました。');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
