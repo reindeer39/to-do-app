@@ -1,1 +1,32 @@
+# 環境変数ファイル（機密情報を含むため）
+.env
+
+# 仮想環境
 .venv/
+
+# データベースファイル
+instance/
+*.db
+
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env/
+
+# IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# other
+DEPLOYMENT.md

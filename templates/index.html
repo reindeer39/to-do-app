@@ -1,44 +1,286 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do App</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-        .task-list { list-style: none; padding: 0; }
-        .task-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-        .task-item.done .task-content { text-decoration: line-through; color: #aaa; }
-        .task-content { flex-grow: 1; }
-        .actions a { text-decoration: none; color: #fff; padding: 5px 10px; border-radius: 4px; margin-left: 5px; }
-        .toggle-btn { background-color: #4CAF50; } /* Green */
-        .delete-btn { background-color: #f44336; } /* Red */
-        form { display: flex; margin-bottom: 20px; }
-        input[type="text"] { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        input[type="submit"] { padding: 10px; border: none; background-color: #007BFF; color: white; border-radius: 4px; margin-left: 10px; cursor: pointer; }
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .task-item.done .task-content {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .task-content {
+            flex-grow: 1;
+        }
+
+        .actions a {
+            text-decoration: none;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+
+        .toggle-btn {
+            background-color: #4CAF50;
+        }
+
+        /* Green */
+        .delete-btn {
+            background-color: #f44336;
+        }
+
+        /* Red */
+        form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="submit"] {
+            padding: 10px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 4px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
-<body>
-    <h1>To-Doリスト</h1>
 
-    <form action="{{ url_for('add') }}" method="POST">
-        <input type="text" name="task_content" placeholder="新しいタスクを入力" required>
+<body>
+    <div class="header">
+        <h1>To-Doリスト</h1>
+        <div class="user-info">
+            <!-- ユーザー名をJavaScriptで動的に表示 -->
+            <span id="username-display">ようこそ、ゲストさん</span>
+            <button class="logout-btn" onclick="logout()">ログアウト</button>
+        </div>
+    </div>
+
+    <!-- タスク追加フォーム -->
+    <form class="add-form" onsubmit="addTask(event)">
+        <input type="text" id="task-input" placeholder="新しいタスクを入力" required>
         <input type="submit" value="追加">
     </form>
 
     <ul class="task-list">
-        {% for task in tasks %}
-            <li class="task-item {% if task.done %}done{% endif %}">
-                <span class="task-content">{{ task.content }}</span>
-                <div class="actions">
-                    <a href="{{ url_for('toggle', task_id=task.id) }}" class="toggle-btn">完了</a>
-                    <a href="{{ url_for('delete', task_id=task.id) }}" class="delete-btn">削除</a>
-                </div>
-            </li>
-        {% else %}
-            <li>タスクはありません。</li>
-        {% endfor %}
+        <li id="task-list">
+            <!-- タスクはJavaScriptで動的に追加されます -->
+            <span class="task-content">タスクを読み込んでいます...</span>
+            <div class="actions">
+                <button class="toggle-btn" disabled>完了</button>
+                <button class="delete-btn" disabled>削除</button>
+            </div>
+        </li>
     </ul>
 
+    <script>
+        // ページ読み込み時に実行
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            await loadTasks();
+        });
+
+        // タスクを読み込む関数
+        async function loadTasks() {
+            const token = localStorage.getItem('accessToken');
+
+            try {
+                const response = await fetch('http://127.0.0.1:5001/api/tasks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert('セッションが切れました。再度ログインしてください。');
+                    localStorage.removeItem('accessToken');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const tasks = await response.json();
+                displayTasks(tasks);
+
+            } catch (error) {
+                console.error('タスクの取得中にエラーが発生:', error);
+            }
+        }
+
+        // タスクを表示する関数
+        function displayTasks(tasks) {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<li>タスクはありません。新しいタスクを追加してください。</li>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item ${task.done ? 'done' : ''}`;
+                
+                li.innerHTML = `
+                    <span class="task-content">${task.content}</span>
+                    <div class="actions">
+                        <button class="toggle-btn" onclick="toggleTask(${task.id})">
+                            ${task.done ? '未完了' : '完了'}
+                        </button>
+                        <button class="delete-btn" onclick="deleteTask(${task.id})">削除</button>
+                    </div>
+                `;
+                
+                taskList.appendChild(li);
+            });
+        }
+
+        // タスクを追加する関数
+        async function addTask(event) {
+            event.preventDefault();
+            const token = localStorage.getItem('accessToken');
+            const taskInput = document.getElementById('task-input');
+            const content = taskInput.value.trim();
+
+            if (!content) return;
+
+            try {
+                const response = await fetch('http://127.0.0.1:5001/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content })
+                });
+
+                if (response.ok) {
+                    taskInput.value = '';
+                    await loadTasks(); // タスクリストを再読み込み
+                } else {
+                    alert('タスクの追加に失敗しました');
+                }
+            } catch (error) {
+                console.error('タスク追加エラー:', error);
+            }
+        }
+
+        // タスクの完了状態を切り替える関数
+        async function toggleTask(taskId) {
+            const token = localStorage.getItem('accessToken');
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5001/api/tasks/${taskId}/toggle`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    await loadTasks();
+                } else {
+                    alert('タスクの更新に失敗しました');
+                }
+            } catch (error) {
+                console.error('タスク更新エラー:', error);
+            }
+        }
+
+        // タスクを削除する関数
+        async function deleteTask(taskId) {
+            if (!confirm('このタスクを削除しますか？')) return;
+
+            const token = localStorage.getItem('accessToken');
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5001/api/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    await loadTasks();
+                } else {
+                    alert('タスクの削除に失敗しました');
+                }
+            } catch (error) {
+                console.error('タスク削除エラー:', error);
+            }
+        }
+
+        // ログアウト関数
+        function logout() {
+            localStorage.removeItem('accessToken');
+            window.location.href = 'login.html';
+        }
+    </script>
 </body>
+
 </html>
